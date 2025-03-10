@@ -40,6 +40,7 @@ func GeneratePagination(params PaginationParam) PaginationResult {
 		nextPage     int
 		previousPage int
 	)
+
 	if params.Page < totalPage {
 		nextPage = params.Page + 1
 	}
@@ -57,6 +58,7 @@ func GeneratePagination(params PaginationParam) PaginationResult {
 		Limit:        params.Limit,
 		Data:         params.Data,
 	}
+
 	return result
 }
 
