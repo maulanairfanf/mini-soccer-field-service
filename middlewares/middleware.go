@@ -76,6 +76,9 @@ func validateAPIKey(c *gin.Context) error {
 	hash.Write([]byte(validateKey))
 	resultHash := hex.EncodeToString(hash.Sum(nil))
 
+	logrus.Infof("resultHash field: %v", resultHash)
+	logrus.Infof("apiKey field: %v", apiKey)
+
 	if apiKey != resultHash {
 		return errConstant.ErrUnauthorized
 	}
@@ -92,8 +95,13 @@ func contains(roles []string, role string) bool {
 }
 
 func CheckRole(roles []string, client clients.IClientRegistry) gin.HandlerFunc {
+	// logrus.Infof("roles: %v", roles)
+	// logrus.Infof("client: %v", client)
 	return func(c *gin.Context) {
 		user, err := client.GetUser().GetUserByToken(c.Request.Context())
+		// logrus.Infof("user: %v", user)
+		// logrus.Infof("err: %v", err)
+
 		if err != nil {
 			responseUnauthorized(c, errConstant.ErrUnauthorized.Error())
 			return
@@ -117,6 +125,7 @@ func Authenticate() gin.HandlerFunc {
 		}
 
 		err = validateAPIKey(c)
+		logrus.Infof("err validateAPIKey: %v", err)
 		if err != nil {
 			responseUnauthorized(c, err.Error())
 			return

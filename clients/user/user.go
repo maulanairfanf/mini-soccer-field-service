@@ -2,64 +2,63 @@ package clients
 
 import (
 	"context"
-	configClients "field-service/clients/config"
+	"field-service/clients/config"
 	"field-service/common/util"
-	config "field-service/config"
+	config2 "field-service/config"
 	"field-service/constants"
 	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/parnurzeal/gorequest"
+
+	"github.com/sirupsen/logrus"
+
 )
 
 type UserClient struct {
-	client configClients.IClientConfig
+	client config.IClientConfig
 }
 
 type IUserClient interface {
 	GetUserByToken(context.Context) (*UserData, error)
 }
 
-func NewUserClient(client configClients.IClientConfig) IUserClient {
+func NewUserClient(client config.IClientConfig) IUserClient {
 	return &UserClient{client: client}
 }
 
 func (u *UserClient) GetUserByToken(ctx context.Context) (*UserData, error) {
 	unixTime := time.Now().Unix()
+	logrus.Infof("field requestAt: %d", unixTime)
+	logrus.Infof("field serviceName: %s", config2.Config.AppName)
+	logrus.Infof("field signatureKey: %s", u.client.SignatureKey())
 	generateAPIKey := fmt.Sprintf("%s:%s:%d",
-		config.Config.AppName,
-		u.client.SignatureKey(),
-		unixTime,
+			config2.Config.AppName,
+			u.client.SignatureKey(),
+			unixTime,
 	)
+	logrus.Infof("field generateAPIKey: %s", generateAPIKey)
+
 	apiKey := util.GenerateSHA256(generateAPIKey)
 	token := ctx.Value(constants.Token).(string)
 	bearerToken := fmt.Sprintf("Bearer %s", token)
 
+	logrus.Infof("field apiKey: %s", apiKey)
 	var response UserResponse
-	request := gorequest.New().
-		Set("Content-Type", "application/json").
-		Set("Accept", "application/json").
+	request := u.client.Client().
+		Get(fmt.Sprintf("%s/api/v1/auth/user", u.client.BaseURL())).
 		Set(constants.Authorization, bearerToken).
-		Set(constants.XServiceName, config.Config.AppName).
+		Set(constants.XServiceName, config2.Config.AppName).
 		Set(constants.XApiKey, apiKey).
-		Set(constants.XRequestAt, fmt.Sprintf("%d", unixTime)).
-		Get(fmt.Sprintf("%s/api/v1/auth/user", u.client.BaseURL()))
-
-	// request := u.client.Client().Clone().
-	// 	Set(constants.Authorization, bearerToken).
-	// 	Set(constants.XServiceName, config2.Config.AppName).
-	// 	Set(constants.XApiKey, apiKey).
-	// 	Set(constants.XRequestAt, fmt.Sprintf("%d", unixTime)).
-	// 	Get(fmt.Sprintf("%s/api/v1/auth/user", u.client.BaseURL()))
+		Set(constants.XRequestAt, fmt.Sprintf("%d", unixTime))
 
 	resp, _, errs := request.EndStruct(&response)
 	if len(errs) > 0 {
-		return nil, errs[0]
+			return nil, errs[0]
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("user response: %s", response.Message)
+			return nil, fmt.Errorf("user response: %s", response.Message)
 	}
 
 	return &response.Data, nil
