@@ -11,7 +11,8 @@ type FieldRequest struct {
 	Name         string                 `form:"name" validate:"required"`
 	Code         string                 `form:"code" validate:"required"`
 	PricePerHour int                    `form:"pricePerHour" validate:"required"`
-	Images       []multipart.FileHeader `form:"images" validate:"required"`
+	// Images       []multipart.FileHeader `form:"images" validate:"required"`
+	Images       []multipart.FileHeader `form:"images"`
 }
 
 type UpdateFieldRequest struct {

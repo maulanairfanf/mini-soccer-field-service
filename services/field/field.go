@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 type FieldService struct {
@@ -69,24 +70,31 @@ func (f *FieldService) GetAllWithPagination(
 	return &response, nil
 }
 
+
 func (f *FieldService) GetAllWithoutPagination(ctx context.Context) ([]dto.FieldResponse, error) {
 	fields, err := f.repository.GetField().FindAllWithoutPagination(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	fieldResults := make([]dto.FieldResponse, 0, len(fields))
+
+	var fieldResults []dto.FieldResponse
 	for _, field := range fields {
 		fieldResults = append(fieldResults, dto.FieldResponse{
 			UUID:         field.UUID,
+			Code:         field.Code,
 			Name:         field.Name,
 			PricePerHour: field.PricePerHour,
 			Images:       field.Images,
+			CreatedAt:    field.CreatedAt,
+			UpdatedAt:    field.UpdatedAt,
 		})
 	}
 
 	return fieldResults, nil
 }
+
+
 
 func (f *FieldService) GetByUUID(ctx context.Context, uuid string) (*dto.FieldResponse, error) {
 	field, err := f.repository.GetField().FindByUUID(ctx, uuid)
@@ -160,16 +168,17 @@ func (f *FieldService) uploadImage(ctx context.Context, images []multipart.FileH
 }
 
 func (f *FieldService) Create(ctx context.Context, request *dto.FieldRequest) (*dto.FieldResponse, error) {
-	imageUrl, err := f.uploadImage(ctx, request.Images)
-	if err != nil {
-		return nil, err
-	}
+	// imageUrl, err := f.uploadImage(ctx, request.Images)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	field, err := f.repository.GetField().Create(ctx, &models.Field{
 		Code:         request.Code,
 		Name:         request.Name,
 		PricePerHour: request.PricePerHour,
-		Images:       imageUrl,
+		// Images:       imageUrl,
+		Images:       []string{"https://gelora-public-storage.s3-ap-southeast-1.amazonaws.com/upload/public-20230110035949.jpg"},
 	})
 	if err != nil {
 		return nil, err

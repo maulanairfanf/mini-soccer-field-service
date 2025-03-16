@@ -9,10 +9,6 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
-
-	"github.com/sirupsen/logrus"
-
 )
 
 type UserClient struct {
@@ -29,21 +25,17 @@ func NewUserClient(client config.IClientConfig) IUserClient {
 
 func (u *UserClient) GetUserByToken(ctx context.Context) (*UserData, error) {
 	unixTime := time.Now().Unix()
-	logrus.Infof("field requestAt: %d", unixTime)
-	logrus.Infof("field serviceName: %s", config2.Config.AppName)
-	logrus.Infof("field signatureKey: %s", u.client.SignatureKey())
+	
 	generateAPIKey := fmt.Sprintf("%s:%s:%d",
 			config2.Config.AppName,
 			u.client.SignatureKey(),
 			unixTime,
 	)
-	logrus.Infof("field generateAPIKey: %s", generateAPIKey)
 
 	apiKey := util.GenerateSHA256(generateAPIKey)
 	token := ctx.Value(constants.Token).(string)
 	bearerToken := fmt.Sprintf("Bearer %s", token)
 
-	logrus.Infof("field apiKey: %s", apiKey)
 	var response UserResponse
 	request := u.client.Client().
 		Get(fmt.Sprintf("%s/api/v1/auth/user", u.client.BaseURL())).
