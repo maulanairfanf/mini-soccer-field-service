@@ -19,7 +19,7 @@ func NewClientRegistry() IClientRegistry {
 func (c *ClientRegistry) GetUser() clients.IUserClient {
 	return clients.NewUserClient(
 		config.NewClientConfig(
-			config.WithBaseURL(config2.Config.InternalService.User.Host),
+			config.WithBaseURL(config2.Config.InternalService.User.Host),  // use localhost:8001 for local development | use user-service:8001 for docker
 			config.WithSignatureKey(config2.Config.InternalService.User.SignatureKey),
 		))
 }
